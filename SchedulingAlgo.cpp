@@ -7,6 +7,7 @@
 #include<bits/stdc++.h>
 using namespace std;
 
+
 typedef struct process
 {
     int id=0;
@@ -20,12 +21,19 @@ typedef struct process
     int responseTime=0;
     bool isCompleted=false;
     int remainingTime=0;
+    bool isQ1Done=false;
+    bool isQ2Done=false;
+
 
 
 } process ;
 
-class Scheduling
+class Scheduling  
 {
+/*
+ base class of all scheduling algorithms, every other algorithm inherits 
+ from it.
+*/
 protected:
     vector<process> processes;
     int numOfProcesses;
@@ -345,7 +353,114 @@ public:
 
     }
 };
+class MLFQ:public Scheduling
+{
+public:
+    MLFQ(vector<process> pops):Scheduling(pops)
+    {
+        schName="MLFQ";
 
+    }
+    void run()
+    {
+        vector<process*> vrr1;
+        int q1 =4;
+        vector<process*> vrr2;
+        int q2 =8;
+        vector<process*> vfcfs;
+
+        for(int i=0;i<processes.size();i++)
+        {
+            process *temp=&processes[i];
+            vrr1.push_back(temp);
+        }
+
+       // cout<<vrr1.size()<<endl;
+
+        int curTime=0;
+        int remainingProc=numOfProcesses;
+        for(int i=0;i<numOfProcesses;i=(i+1)%numOfProcesses)
+        {
+              if(vrr1[i]->remainingTime>0 && vrr1[i]->arrivalTime<=curTime&& !vrr1[i]->isQ1Done)
+            {
+                if(vrr1[i]->remainingTime==vrr1[i]->burstTime)
+                {
+                    vrr1[i]->startTime=curTime;
+                    vrr1[i]->responseTime=curTime-vrr1[i]->arrivalTime;
+                }
+                if(vrr1[i]->remainingTime<=q1)
+                {
+                    curTime+=vrr1[i]->remainingTime;
+                    vrr1[i]->completionTime=curTime;
+                    vrr1[i]->remainingTime=0;
+                    vrr1[i]->isQ1Done=true;
+                    remainingProc--;
+                }
+                else
+                {
+                    curTime+=q1;
+                    vrr1[i]->remainingTime-=q1;
+                    vrr2.push_back(vrr1[i]);
+                    vrr1[i]->isQ1Done=true;
+                    remainingProc--;
+                }
+            }
+            if(remainingProc==0)
+                break;
+        }
+       // vrr1.clear();
+     //  print();
+
+        cout<<vrr2.size()<<endl;
+
+        remainingProc=vrr2.size();
+        for(int i=0;i<vrr2.size();i=(i+1)%vrr2.size())
+        {
+              if(vrr2[i]->remainingTime>0 && vrr2 [i]->arrivalTime<=curTime && !vrr2[i]->isQ2Done)
+            {
+
+                if(vrr2[i]->remainingTime<= q2)
+                {
+                    curTime+=vrr2[i]->remainingTime;
+                    vrr2[i]->completionTime=curTime;
+                    vrr2[i]->remainingTime=0;
+                    vrr2[i]->isQ2Done=true;
+                    remainingProc--;
+                }
+                else
+                {
+                    curTime+=q2;
+                    vrr2[i]->remainingTime-=q1;
+                    vrr2[i]->isQ2Done=true;
+                    vfcfs.push_back(vrr2[i]);
+                    remainingProc--;
+                }
+            }
+            if(remainingProc==0)
+                break;
+        }
+
+        //vrr2.clear();
+        //  print();
+
+       // cout<<vfcfs.size()<<endl;
+
+
+
+        for(int i=0;i<vfcfs.size();i++)
+        {
+            vfcfs[i]->completionTime=curTime+vfcfs[i]->remainingTime;
+            curTime+=vfcfs[i]->remainingTime;
+
+                //vfcfs[i]->startTime=processes[i-1].completionTime;
+            //processes[i].responseTime=processes[i].startTime-processes[i].arrivalTime;
+        }
+
+
+
+
+    }
+};
 
 
 int main()
